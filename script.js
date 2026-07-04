@@ -81,6 +81,44 @@ window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 // touch
 const touchState = {};
+const joystick = document.getElementById('joystick');
+const joystickKnob = document.getElementById('joystick-knob');
+const touchControls = document.getElementById('touch');
+const joystickState = { active: false, x: 0, y: 0, pointerId: null };
+
+function resetJoystickInput() {
+  joystickState.active = false;
+  joystickState.pointerId = null;
+  joystickState.x = 0;
+  joystickState.y = 0;
+  touchState.up = false;
+  touchState.down = false;
+  touchState.left = false;
+  touchState.right = false;
+  if (joystickKnob) {
+    joystickKnob.style.transform = 'translate(-50%, -50%)';
+  }
+}
+
+function setJoystickInput(x, y) {
+  const radius = 44;
+  const magnitude = Math.min(Math.hypot(x, y), radius);
+  const angle = Math.atan2(y, x);
+  const clampedX = Math.cos(angle) * magnitude;
+  const clampedY = Math.sin(angle) * magnitude;
+
+  joystickState.x = clampedX / radius;
+  joystickState.y = clampedY / radius;
+  touchState.up = joystickState.y < -0.25;
+  touchState.down = joystickState.y > 0.25;
+  touchState.left = joystickState.x < -0.25;
+  touchState.right = joystickState.x > 0.25;
+
+  if (joystickKnob) {
+    joystickKnob.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+  }
+}
+
 document.querySelectorAll('.touch-btn').forEach(btn => {
   const k = btn.dataset.key;
   const press = e => { e.preventDefault(); touchState[k]=true; };
@@ -93,12 +131,80 @@ document.querySelectorAll('.touch-btn').forEach(btn => {
   btn.addEventListener('mouseleave', release);
 });
 
+function handleJoystickMove(clientX, clientY) {
+  if (!joystick || !joystick.isConnected) return;
+  const rect = joystick.getBoundingClientRect();
+  const x = clientX - (rect.left + rect.width / 2);
+  const y = clientY - (rect.top + rect.height / 2);
+  setJoystickInput(x, y);
+}
+
+function updateTouchControlsVisibility() {
+  const useTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches || 'ontouchstart' in window || window.innerWidth <= 768;
+  const shouldShow = useTouch && typeof state !== 'undefined' && state.phase === 'playing';
+  if (touchControls) {
+    touchControls.classList.toggle('visible', shouldShow);
+  }
+}
+
+if (joystick) {
+  joystick.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    joystickState.active = true;
+    joystickState.pointerId = e.pointerId;
+    joystick.setPointerCapture?.(e.pointerId);
+    handleJoystickMove(e.clientX, e.clientY);
+  });
+
+  window.addEventListener('pointermove', e => {
+    if (!joystickState.active || joystickState.pointerId !== null && joystickState.pointerId !== e.pointerId) return;
+    handleJoystickMove(e.clientX, e.clientY);
+  });
+
+  window.addEventListener('pointerup', e => {
+    if (joystickState.pointerId !== null && joystickState.pointerId !== e.pointerId) return;
+    resetJoystickInput();
+  });
+
+  window.addEventListener('pointercancel', e => {
+    if (joystickState.pointerId !== null && joystickState.pointerId !== e.pointerId) return;
+    resetJoystickInput();
+  });
+}
+
+window.addEventListener('resize', updateTouchControlsVisibility);
+window.addEventListener('orientationchange', updateTouchControlsVisibility);
+
 function isKey(...codes) {
   for (const c of codes) {
     if (keys[c] || touchState[c]) return true;
   }
+  if (codes.includes('up') && joystickState.y < -0.25) return true;
+  if (codes.includes('down') && joystickState.y > 0.25) return true;
+  if (codes.includes('left') && joystickState.x < -0.25) return true;
+  if (codes.includes('right') && joystickState.x > 0.25) return true;
   return false;
 }
+
+function resizeCanvas() {
+  const maxWidth = Math.max(260, window.innerWidth - 16);
+  const maxHeight = Math.max(220, window.innerHeight - 140);
+  const ratio = canvas.width / canvas.height;
+  let width = maxWidth;
+  let height = width / ratio;
+
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * ratio;
+  }
+
+  canvas.style.width = `${Math.round(width)}px`;
+  canvas.style.height = `${Math.round(height)}px`;
+}
+
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', resizeCanvas);
+resizeCanvas();
 
 // ---------- GAME STATE ----------
 const LEVELS = [
@@ -636,6 +742,7 @@ function startLevel() {
 function beginPlay() {
   state.phase = 'playing';
   overlay.classList.add('hidden');
+  updateTouchControlsVisibility();
   playBGM(LEVELS[state.level-1].bgm);
   state.spawnTimer = 0;
 }
@@ -652,6 +759,7 @@ function nextLevel() {
 
 function gameOver() {
   state.phase = 'gameover';
+  updateTouchControlsVisibility();
   stopBGM();
   playBGM(audio.gameover);
   playSFX('gameover');
@@ -659,7 +767,7 @@ function gameOver() {
   overlay.innerHTML = `
     <h1>💀 Game Over</h1>
     <h2>Brujita se quedó dormida en la escoba...</h2>
-    <div class="story">"¡¿Cómo que se me acabó el café mágico?!"</div>
+    <div class="story">"¡Tendre que tirarme las cartas!"</div>
     <p>Puntos finales: <b>${state.score}</b></p>
     <p>Niveles completados: <b>${state.level - 1}</b> / ${LEVELS.length}</p>
     <button id="retry-btn">🧹 Intentar de Nuevo</button>
@@ -672,6 +780,7 @@ function gameOver() {
 
 function victory() {
   state.phase = 'victory';
+  updateTouchControlsVisibility();
   stopBGM();
   playBGM(audio.victory);
   overlay.classList.remove('hidden');
@@ -691,6 +800,7 @@ function victory() {
 
 function levelComplete() {
   state.phase = 'levelComplete';
+  updateTouchControlsVisibility();
   stopBGM();
   playBGM(audio.victory);
   playSFX('levelup');
@@ -952,6 +1062,7 @@ function loop() {
 function init() {
   spawnStars(80);
   spawnClouds();
+  updateTouchControlsVisibility();
   loop();
 }
 
