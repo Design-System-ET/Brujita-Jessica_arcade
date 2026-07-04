@@ -574,8 +574,9 @@ function drawBackground() {
 
 // ---------- HUD ----------
 function updateHUD() {
+  const totalLives = 5;
   scoreEl.textContent = state.score;
-  livesEl.textContent = '❤️'.repeat(Math.max(0,state.lives)) + '🖤'.repeat(Math.max(0,3-state.lives));
+  livesEl.textContent = '❤️'.repeat(Math.max(0, state.lives)) + '🖤'.repeat(Math.max(0, totalLives - state.lives));
   levelEl.textContent = state.level;
   const lvl = LEVELS[state.level-1];
   objectiveEl.textContent = `📍 ${lvl.name} — Entrega ${state.delivered}/${lvl.objective}`;

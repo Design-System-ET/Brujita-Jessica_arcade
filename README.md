@@ -1,31 +1,55 @@
 # Brujita Arcade
 
-Brujita Arcade es un juego web tipo arcade hecho con HTML, CSS y JavaScript vanilla. El jugador controla a Brujita en una aventura de reparto nocturno, recogiendo pociones, entregándolas a clientes y esquivando enemigos.
+Brujita Arcade es un juego web tipo arcade creado con HTML, CSS y JavaScript vanilla. El jugador controla a Brujita en una aventura de reparto nocturno, recoge pociones, las entrega a los clientes y esquiva enemigos mientras avanza por varios niveles.
 
 ## Características
 
-- Juego de arcade en navegador
+- Juego de arcade en navegador con canvas
 - Controles por teclado y pantalla táctil
-- HUD con puntuación, nivel y vidas
-- Música y efectos de sonido
-- Diseño estilo pixel-art con temática mágica
+- Joystick virtual y botón de acción para móviles
+- HUD con puntuación, nivel, vidas y combo
+- Pantallas de inicio, victoria, game over y avance de nivel
+- Música y efectos de sonido en la carpeta de audio
+- Diseño responsive con temática mágica y nocturna
 
 ## Requisitos
 
-Solo necesitas un navegador moderno con soporte para HTML5 y JavaScript.
+Solo necesitas un navegador moderno con soporte para HTML5, Canvas y JavaScript.
 
-## Cómo jugar
+## Cómo ejecutar el proyecto
 
-1. Abre el archivo index.html en tu navegador.
-2. Usa las teclas WASD o las flechas para mover a Brujita.
-3. Pulsa Espacio para disparar.
-4. Recoge pociones y entrega a los clientes para avanzar de nivel.
+Opción sencilla:
+1. Abre [index.html](index.html) directamente en tu navegador.
+
+Opción recomendada para evitar problemas con archivos de audio:
+1. Abre una terminal en la carpeta del proyecto.
+2. Ejecuta un servidor local, por ejemplo: `python -m http.server 8000`
+3. Visita `http://localhost:8000` en tu navegador.
+
+## Controles
+
+- Movimiento: WASD o flechas del teclado
+- Disparo: Espacio
+- Móvil: joystick virtual para moverse y botón de acción para disparar
 
 ## Estructura del proyecto
 
-- index.html: archivo principal del juego
-- audio/: sonidos y música del juego
+- [index.html](index.html): estructura principal de la página, canvas, HUD y overlays
+- [styles.css](styles.css): estilos visuales, diseño responsive y controles táctiles
+- [script.js](script.js): lógica del juego, bucle principal, input, entidades, colisiones y renderizado
+- [audio/](audio/): música, narración y efectos de sonido del juego
+- [.gitignore](.gitignore): archivos y carpetas ignorados por Git
+- [LICENSE](LICENSE): licencia del proyecto
+- [extensions-list.txt](extensions-list.txt): lista de extensiones recomendadas para el entorno de desarrollo
+- [canvas-debug.png](canvas-debug.png): captura de depuración del canvas
+
+## Desarrollo
+
+El proyecto está pensado como un prototipo de juego arcade web simple y fácil de extender. Puedes modificar:
+- los niveles en la sección `LEVELS` de [script.js](script.js)
+- la apariencia en [styles.css](styles.css)
+- la estructura del menú y HUD en [index.html](index.html)
 
 ## Licencia
 
-Este proyecto está bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.
+Este proyecto está bajo la licencia MIT. Consulta [LICENSE](LICENSE) para más detalles.
